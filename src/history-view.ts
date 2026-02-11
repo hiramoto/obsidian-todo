@@ -26,7 +26,7 @@ export function createHistoryPostProcessor(
 
         // We need to detect if this is the last section being processed
         // Use a container div that we can check for later
-        const container = el.createDiv({ cls: "taskchute-history-placeholder" });
+        const container = el.createDiv({ cls: "kozane-history-placeholder" });
         container.dataset.taskName = taskName;
 
         // Defer the actual rendering to avoid blocking
@@ -52,7 +52,7 @@ async function renderHistoryInPlace(
     const parent = container.closest(".markdown-reading-view, .markdown-preview-view");
     if (parent) {
         const allPlaceholders = parent.querySelectorAll(
-            `.taskchute-history-placeholder[data-task-name="${taskName}"]`
+            `.kozane-history-placeholder[data-task-name="${taskName}"]`
         );
         const lastPlaceholder = allPlaceholders[allPlaceholders.length - 1];
         if (container !== lastPlaceholder) {
@@ -70,7 +70,7 @@ async function renderHistoryInPlace(
     }
 
     container.empty();
-    container.addClass("taskchute-history");
+    container.addClass("kozane-history");
 
     // Separator
     container.createEl("hr");
@@ -79,7 +79,7 @@ async function renderHistoryInPlace(
     container.createEl("h2", { text: "作業履歴（自動生成）" });
 
     // Table
-    const table = container.createEl("table", { cls: "taskchute-history-table" });
+    const table = container.createEl("table", { cls: "kozane-history-table" });
 
     // Header row
     const thead = table.createEl("thead");
@@ -120,7 +120,7 @@ async function renderHistoryInPlace(
     }
 
     // Summary
-    const summary = container.createEl("p", { cls: "taskchute-history-summary" });
+    const summary = container.createEl("p", { cls: "kozane-history-summary" });
     summary.createEl("strong", { text: `累計作業時間: ${formatDuration(totalMinutes)}` });
     summary.createEl("br");
     summary.createEl("strong", { text: `作業日数: ${workDays.size}日` });

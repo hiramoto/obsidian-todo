@@ -1,46 +1,46 @@
-/* TaskChute Work Logger Styles */
+/* Kozane Journal Styles */
 
 /* --- History View (Task File) --- */
-.taskchute-history {
+.kozane-history {
     margin-top: 1em;
 }
 
-.taskchute-history h2 {
+.kozane-history h2 {
     font-size: 1.2em;
     color: var(--text-muted);
 }
 
-.taskchute-history-table {
+.kozane-history-table {
     width: 100%;
     border-collapse: collapse;
     margin: 0.5em 0;
 }
 
-.taskchute-history-table th,
-.taskchute-history-table td {
+.kozane-history-table th,
+.kozane-history-table td {
     border: 1px solid var(--background-modifier-border);
     padding: 4px 8px;
     text-align: left;
     font-size: 0.9em;
 }
 
-.taskchute-history-table th {
+.kozane-history-table th {
     background-color: var(--background-secondary);
     font-weight: 600;
 }
 
-.taskchute-history-table tr:hover {
+.kozane-history-table tr:hover {
     background-color: var(--background-secondary-alt);
 }
 
-.taskchute-history-summary {
+.kozane-history-summary {
     margin-top: 0.5em;
     color: var(--text-muted);
     font-size: 0.9em;
 }
 
 /* --- Sidebar View --- */
-.taskchute-tab-bar {
+.kozane-tab-bar {
     display: flex;
     gap: 4px;
     padding: 8px;
@@ -48,7 +48,7 @@
     flex-wrap: wrap;
 }
 
-.taskchute-tab {
+.kozane-tab {
     padding: 4px 10px;
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
@@ -58,81 +58,81 @@
     font-size: 0.85em;
 }
 
-.taskchute-tab:hover {
+.kozane-tab:hover {
     background: var(--background-secondary);
 }
 
-.taskchute-tab.is-active {
+.kozane-tab.is-active {
     background: var(--interactive-accent);
     color: var(--text-on-accent);
     border-color: var(--interactive-accent);
 }
 
-.taskchute-sidebar-content {
+.kozane-sidebar-content {
     padding: 12px;
 }
 
-.taskchute-sidebar-content h3 {
+.kozane-sidebar-content h3 {
     font-size: 1em;
     margin: 0 0 8px 0;
 }
 
-.taskchute-sidebar-content h4 {
+.kozane-sidebar-content h4 {
     font-size: 0.9em;
     margin: 12px 0 4px 0;
     color: var(--text-muted);
 }
 
-.taskchute-progress-info {
+.kozane-progress-info {
     margin-bottom: 12px;
 }
 
-.taskchute-info-row {
+.kozane-info-row {
     display: flex;
     justify-content: space-between;
     padding: 2px 0;
     font-size: 0.9em;
 }
 
-.taskchute-info-label {
+.kozane-info-label {
     color: var(--text-muted);
 }
 
-.taskchute-info-value {
+.kozane-info-value {
     font-weight: 600;
 }
 
-.taskchute-task-summary {
+.kozane-task-summary {
     margin-top: 8px;
 }
 
-.taskchute-task-item {
+.kozane-task-item {
     margin: 6px 0;
 }
 
-.taskchute-task-name {
+.kozane-task-name {
     font-weight: 600;
     font-size: 0.9em;
 }
 
-.taskchute-task-detail {
+.kozane-task-detail {
     font-size: 0.85em;
     color: var(--text-muted);
     padding-left: 8px;
 }
 
-.taskchute-date-range {
+.kozane-date-range {
     font-size: 0.85em;
     color: var(--text-muted);
     margin: 0 0 8px 0;
 }
 
-.taskchute-no-data {
+.kozane-no-data {
     color: var(--text-muted);
     font-style: italic;
     font-size: 0.9em;
 }
 
-.taskchute-period-summary {
+.kozane-period-summary {
     margin-top: 8px;
 }

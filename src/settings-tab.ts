@@ -1,10 +1,10 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import type TaskChutePlugin from "../main";
+import type KozaneJournalPlugin from "../main";
 
-export class TaskChuteSettingTab extends PluginSettingTab {
-    plugin: TaskChutePlugin;
+export class KozaneJournalSettingTab extends PluginSettingTab {
+    plugin: KozaneJournalPlugin;
 
-    constructor(app: App, plugin: TaskChutePlugin) {
+    constructor(app: App, plugin: KozaneJournalPlugin) {
         super(app, plugin);
         this.plugin = plugin;
     }
@@ -13,7 +13,7 @@ export class TaskChuteSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        containerEl.createEl("h2", { text: "TaskChute Work Logger 設定" });
+        containerEl.createEl("h2", { text: "Kozane Journal 設定" });
 
         // --- Folder settings ---
         containerEl.createEl("h3", { text: "フォルダ設定" });

@@ -9,9 +9,9 @@ import { TaskSelectModal, MemoInputModal, getTaskFilesSorted, startWork, endWork
 import { updateStatusBar } from "./src/statusbar";
 import { createHistoryPostProcessor } from "./src/history-view";
 import { DailySummaryView } from "./src/sidebar-view";
-import { TaskChuteSettingTab } from "./src/settings-tab";
+import { KozaneJournalSettingTab } from "./src/settings-tab";
 
-export default class TaskChutePlugin extends Plugin {
+export default class KozaneJournalPlugin extends Plugin {
     settings: PluginSettings = DEFAULT_SETTINGS;
     private statusBarEl: HTMLElement | null = null;
     private activeWork: ActiveWork | null = null;
@@ -55,12 +55,12 @@ export default class TaskChutePlugin extends Plugin {
         );
 
         // Ribbon icon to open sidebar
-        this.addRibbonIcon("clock", "TaskChute 集計", () => {
+        this.addRibbonIcon("clock", "Kozane Journal 集計", () => {
             this.activateSidebarView();
         });
 
         // --- Settings Tab ---
-        this.addSettingTab(new TaskChuteSettingTab(this.app, this));
+        this.addSettingTab(new KozaneJournalSettingTab(this.app, this));
 
         // --- File change watcher ---
         this.registerEvent(
