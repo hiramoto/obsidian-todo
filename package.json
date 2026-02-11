@@ -1,5 +1,5 @@
 {
-    "name": "taskchute-work-logger",
+    "name": "kozane-journal",
     "version": "1.0.0",
     "description": "タスク管理と作業時間記録のためのObsidianプラグイン",
     "main": "main.js",

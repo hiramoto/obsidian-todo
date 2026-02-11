@@ -28,7 +28,7 @@ export class DailySummaryView extends ItemView {
     }
 
     getDisplayText(): string {
-        return "TaskChute 集計";
+        return "Kozane Journal 集計";
     }
 
     getIcon(): string {
@@ -48,7 +48,7 @@ export class DailySummaryView extends ItemView {
         container.empty();
 
         // Tab bar
-        const tabBar = container.createDiv({ cls: "taskchute-tab-bar" });
+        const tabBar = container.createDiv({ cls: "kozane-tab-bar" });
         const tabs: { id: SummaryPeriod; label: string }[] = [
             { id: "today", label: "今日" },
             { id: "this-week", label: "今週" },
@@ -60,7 +60,7 @@ export class DailySummaryView extends ItemView {
         for (const tab of tabs) {
             const btn = tabBar.createEl("button", {
                 text: tab.label,
-                cls: `taskchute-tab ${this.currentPeriod === tab.id ? "is-active" : ""}`,
+                cls: `kozane-tab ${this.currentPeriod === tab.id ? "is-active" : ""}`,
             });
             btn.addEventListener("click", () => {
                 this.currentPeriod = tab.id;
@@ -68,7 +68,7 @@ export class DailySummaryView extends ItemView {
             });
         }
 
-        const content = container.createDiv({ cls: "taskchute-sidebar-content" });
+        const content = container.createDiv({ cls: "kozane-sidebar-content" });
 
         if (this.currentPeriod === "today") {
             await this.renderTodaySummary(content);
@@ -83,7 +83,7 @@ export class DailySummaryView extends ItemView {
         if (!dailyFile) {
             container.createEl("p", {
                 text: "今日の日次ノートがありません",
-                cls: "taskchute-no-data",
+                cls: "kozane-no-data",
             });
             return;
         }
@@ -99,10 +99,10 @@ export class DailySummaryView extends ItemView {
         const remainingMinutes = Math.max(0, totalPlannedMinutes - totalLoggedMinutes);
 
         // Progress section
-        const progressSection = container.createDiv({ cls: "taskchute-progress" });
+        const progressSection = container.createDiv({ cls: "kozane-progress" });
         progressSection.createEl("h3", { text: "【今日の作業時間】" });
 
-        const progressInfo = progressSection.createDiv({ cls: "taskchute-progress-info" });
+        const progressInfo = progressSection.createDiv({ cls: "kozane-progress-info" });
 
         this.addInfoRow(progressInfo, "予定総時間", formatDuration(totalPlannedMinutes));
         this.addInfoRow(progressInfo, "実績時間", formatDuration(totalLoggedMinutes));
@@ -144,7 +144,7 @@ export class DailySummaryView extends ItemView {
         const header = container.createEl("h3", { text: `【${label}の作業時間】` });
         container.createEl("p", {
             text: `${startDate} 〜 ${endDate}`,
-            cls: "taskchute-date-range",
+            cls: "kozane-date-range",
         });
 
         const entries = await getWorkLogsForDateRange(
@@ -157,7 +157,7 @@ export class DailySummaryView extends ItemView {
         if (entries.length === 0) {
             container.createEl("p", {
                 text: "作業記録がありません",
-                cls: "taskchute-no-data",
+                cls: "kozane-no-data",
             });
             return;
         }
@@ -168,7 +168,7 @@ export class DailySummaryView extends ItemView {
 
         this.renderTaskSummaryWithDays(container, entries, "タスク別集計");
 
-        const summaryDiv = container.createDiv({ cls: "taskchute-period-summary" });
+        const summaryDiv = container.createDiv({ cls: "kozane-period-summary" });
         summaryDiv.createEl("hr");
         this.addInfoRow(summaryDiv, "総作業時間", formatDuration(totalMinutes));
         this.addInfoRow(summaryDiv, "1日平均", formatDuration(avgMinutes));
@@ -181,18 +181,18 @@ export class DailySummaryView extends ItemView {
     ): void {
         const summaryMap = this.buildTaskSummaryMap(entries);
 
-        const section = container.createDiv({ cls: "taskchute-task-summary" });
+        const section = container.createDiv({ cls: "kozane-task-summary" });
         section.createEl("h4", { text: title });
         section.createEl("hr");
 
         const totalMinutes = entries.reduce((sum, e) => sum + e.durationMinutes, 0);
 
         for (const [taskName, summary] of summaryMap) {
-            const taskDiv = section.createDiv({ cls: "taskchute-task-item" });
-            taskDiv.createEl("div", { text: taskName, cls: "taskchute-task-name" });
+            const taskDiv = section.createDiv({ cls: "kozane-task-item" });
+            taskDiv.createEl("div", { text: taskName, cls: "kozane-task-name" });
             taskDiv.createEl("div", {
                 text: `  ${summary.sessionCount}回 / ${formatDuration(summary.totalMinutes)}`,
-                cls: "taskchute-task-detail",
+                cls: "kozane-task-detail",
             });
         }
 
@@ -207,16 +207,16 @@ export class DailySummaryView extends ItemView {
     ): void {
         const summaryMap = this.buildTaskSummaryMap(entries);
 
-        const section = container.createDiv({ cls: "taskchute-task-summary" });
+        const section = container.createDiv({ cls: "kozane-task-summary" });
         section.createEl("h4", { text: title });
         section.createEl("hr");
 
         for (const [taskName, summary] of summaryMap) {
-            const taskDiv = section.createDiv({ cls: "taskchute-task-item" });
-            taskDiv.createEl("div", { text: taskName, cls: "taskchute-task-name" });
+            const taskDiv = section.createDiv({ cls: "kozane-task-item" });
+            taskDiv.createEl("div", { text: taskName, cls: "kozane-task-name" });
             taskDiv.createEl("div", {
                 text: `  作業日数: ${summary.workDays.size}日 / ${formatDuration(summary.totalMinutes)}`,
-                cls: "taskchute-task-detail",
+                cls: "kozane-task-detail",
             });
         }
     }
@@ -247,9 +247,9 @@ export class DailySummaryView extends ItemView {
     }
 
     private addInfoRow(container: HTMLElement, label: string, value: string): void {
-        const row = container.createDiv({ cls: "taskchute-info-row" });
-        row.createEl("span", { text: label, cls: "taskchute-info-label" });
-        row.createEl("span", { text: value, cls: "taskchute-info-value" });
+        const row = container.createDiv({ cls: "kozane-info-row" });
+        row.createEl("span", { text: label, cls: "kozane-info-label" });
+        row.createEl("span", { text: value, cls: "kozane-info-value" });
     }
 
     private getDateRange(period: SummaryPeriod): {

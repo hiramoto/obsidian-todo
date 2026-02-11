@@ -50,4 +50,4 @@ export interface TaskSummary {
 
 export type SummaryPeriod = "today" | "this-week" | "last-week" | "this-month" | "last-month";
 
-export const VIEW_TYPE_DAILY_SUMMARY = "taskchute-daily-summary";
+export const VIEW_TYPE_DAILY_SUMMARY = "kozane-journal-daily-summary";
