@@ -1,0 +1,138 @@
+/* TaskChute Work Logger Styles */
+
+/* --- History View (Task File) --- */
+.taskchute-history {
+    margin-top: 1em;
+}
+
+.taskchute-history h2 {
+    font-size: 1.2em;
+    color: var(--text-muted);
+}
+
+.taskchute-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5em 0;
+}
+
+.taskchute-history-table th,
+.taskchute-history-table td {
+    border: 1px solid var(--background-modifier-border);
+    padding: 4px 8px;
+    text-align: left;
+    font-size: 0.9em;
+}
+
+.taskchute-history-table th {
+    background-color: var(--background-secondary);
+    font-weight: 600;
+}
+
+.taskchute-history-table tr:hover {
+    background-color: var(--background-secondary-alt);
+}
+
+.taskchute-history-summary {
+    margin-top: 0.5em;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+/* --- Sidebar View --- */
+.taskchute-tab-bar {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    flex-wrap: wrap;
+}
+
+.taskchute-tab {
+    padding: 4px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+.taskchute-tab:hover {
+    background: var(--background-secondary);
+}
+
+.taskchute-tab.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.taskchute-sidebar-content {
+    padding: 12px;
+}
+
+.taskchute-sidebar-content h3 {
+    font-size: 1em;
+    margin: 0 0 8px 0;
+}
+
+.taskchute-sidebar-content h4 {
+    font-size: 0.9em;
+    margin: 12px 0 4px 0;
+    color: var(--text-muted);
+}
+
+.taskchute-progress-info {
+    margin-bottom: 12px;
+}
+
+.taskchute-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    font-size: 0.9em;
+}
+
+.taskchute-info-label {
+    color: var(--text-muted);
+}
+
+.taskchute-info-value {
+    font-weight: 600;
+}
+
+.taskchute-task-summary {
+    margin-top: 8px;
+}
+
+.taskchute-task-item {
+    margin: 6px 0;
+}
+
+.taskchute-task-name {
+    font-weight: 600;
+    font-size: 0.9em;
+}
+
+.taskchute-task-detail {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    padding-left: 8px;
+}
+
+.taskchute-date-range {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin: 0 0 8px 0;
+}
+
+.taskchute-no-data {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.taskchute-period-summary {
+    margin-top: 8px;
+}

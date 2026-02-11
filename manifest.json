@@ -1,0 +1,10 @@
+{
+    "id": "taskchute-work-logger",
+    "name": "TaskChute Work Logger",
+    "version": "1.0.0",
+    "minAppVersion": "1.0.0",
+    "description": "タスク管理と作業時間記録のためのプラグイン",
+    "author": "Your Name",
+    "authorUrl": "https://your-site.com",
+    "isDesktopOnly": false
+}
