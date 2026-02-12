@@ -7,6 +7,8 @@ export interface PluginSettings {
     timeRoundingMinutes: number;
     showStatusBar: boolean;
     autoShowHistory: boolean;
+    lunchStartTime: string;
+    lunchEndTime: string;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -18,6 +20,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     timeRoundingMinutes: 5,
     showStatusBar: true,
     autoShowHistory: true,
+    lunchStartTime: "12:00",
+    lunchEndTime: "13:00",
 };
 
 export interface WorkLogEntry {

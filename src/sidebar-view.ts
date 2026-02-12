@@ -7,10 +7,13 @@ import {
     WorkLogEntry,
 } from "./types";
 import {
+    adjustForLunchBreak,
     formatDuration,
     getTodayDailyNote,
+    minutesToTimeStr,
     parseLogEntries,
     parsePlanEntries,
+    parseTimeToMinutes,
     getWorkLogsForDateRange,
 } from "./parser";
 
@@ -222,25 +225,27 @@ export class DailySummaryView extends ItemView {
         this.addInfoRow(progressInfo, "実績時間", formatDuration(totalLoggedMinutes));
         this.addInfoRow(progressInfo, "残り時間", formatDuration(remainingMinutes));
 
-        // Predicted end time
+        // Predicted end time (adjusted for lunch break)
         if (totalPlannedMinutes > 0 && remainingMinutes > 0) {
             let predictedEnd = "";
             if (logEntries.length > 0) {
                 const sorted = [...logEntries].sort((a, b) =>
                     b.endTime.localeCompare(a.endTime)
                 );
-                const [h, m] = sorted[0].endTime.split(":").map(Number);
-                const endMinutes = h * 60 + m + remainingMinutes;
-                const endH = Math.floor(endMinutes / 60) % 24;
-                const endM = endMinutes % 60;
-                predictedEnd = `${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}`;
+                const startMinutes = parseTimeToMinutes(sorted[0].endTime);
+                const endMinutes = adjustForLunchBreak(
+                    startMinutes, remainingMinutes,
+                    this.settings.lunchStartTime, this.settings.lunchEndTime
+                );
+                predictedEnd = minutesToTimeStr(endMinutes);
             } else {
                 const now = new Date();
                 const currentMinutes = now.getHours() * 60 + now.getMinutes();
-                const endMinutes = currentMinutes + remainingMinutes;
-                const endH = Math.floor(endMinutes / 60) % 24;
-                const endM = endMinutes % 60;
-                predictedEnd = `${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}`;
+                const endMinutes = adjustForLunchBreak(
+                    currentMinutes, remainingMinutes,
+                    this.settings.lunchStartTime, this.settings.lunchEndTime
+                );
+                predictedEnd = minutesToTimeStr(endMinutes);
             }
             this.addInfoRow(progressInfo, "⏰ 予定終了", predictedEnd);
         }

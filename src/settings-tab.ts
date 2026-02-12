@@ -108,6 +108,39 @@ export class KozaneJournalSettingTab extends PluginSettingTab {
                     })
             );
 
+        // --- Lunch break settings ---
+        containerEl.createEl("h3", { text: "昼休み設定" });
+
+        new Setting(containerEl)
+            .setName("昼休み開始時刻")
+            .setDesc("昼休みの開始時刻（HH:MM形式）。予定終了時刻の計算で除外されます")
+            .addText((text) =>
+                text
+                    .setPlaceholder("12:00")
+                    .setValue(this.plugin.settings.lunchStartTime)
+                    .onChange(async (value) => {
+                        if (/^\d{2}:\d{2}$/.test(value)) {
+                            this.plugin.settings.lunchStartTime = value;
+                            await this.plugin.saveSettings();
+                        }
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("昼休み終了時刻")
+            .setDesc("昼休みの終了時刻（HH:MM形式）")
+            .addText((text) =>
+                text
+                    .setPlaceholder("13:00")
+                    .setValue(this.plugin.settings.lunchEndTime)
+                    .onChange(async (value) => {
+                        if (/^\d{2}:\d{2}$/.test(value)) {
+                            this.plugin.settings.lunchEndTime = value;
+                            await this.plugin.saveSettings();
+                        }
+                    })
+            );
+
         // --- Display settings ---
         containerEl.createEl("h3", { text: "表示設定" });
 

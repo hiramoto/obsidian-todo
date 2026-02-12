@@ -75,7 +75,7 @@ export function parsePlanEntries(content: string, settings: PluginSettings): Pla
             inPlanSection = true;
             continue;
         }
-        if (inPlanSection && line.startsWith("##")) {
+        if (inPlanSection && line.startsWith("## ") && !line.startsWith("### ")) {
             break;
         }
         if (inPlanSection && line.trim().startsWith("-")) {
@@ -94,6 +94,12 @@ export function parsePlanEntries(content: string, settings: PluginSettings): Pla
  * Format: - [[タスク名]] / サブタスク XXmin or XXh
  */
 export function parsePlanLine(line: string): PlanEntry | null {
+    // Skip strikethrough (cancelled) entries
+    const trimmedContent = line.trim().replace(/^-\s*/, "");
+    if (trimmedContent.startsWith("~~")) {
+        return null;
+    }
+
     const taskMatch = line.match(/\[\[([^\]]+)\]\]/);
     if (!taskMatch) {
         return null;
@@ -212,6 +218,57 @@ export function formatDuration(totalMinutes: number): string {
         return `${hours}時間`;
     }
     return `${hours}時間${mins}分`;
+}
+
+/**
+ * Parse a time string "HH:MM" into total minutes from midnight.
+ */
+export function parseTimeToMinutes(time: string): number {
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+}
+
+/**
+ * Format total minutes from midnight to "HH:MM" string.
+ */
+export function minutesToTimeStr(totalMinutes: number): string {
+    const h = Math.floor(totalMinutes / 60) % 24;
+    const m = totalMinutes % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+}
+
+/**
+ * Calculate predicted end time in minutes, adjusting for lunch break.
+ * If the work period would span the lunch break, the lunch duration is added.
+ * If the start point is during lunch, work begins after lunch ends.
+ */
+export function adjustForLunchBreak(
+    startMinutes: number,
+    remainingMinutes: number,
+    lunchStartTime: string,
+    lunchEndTime: string
+): number {
+    const lunchStart = parseTimeToMinutes(lunchStartTime);
+    const lunchEnd = parseTimeToMinutes(lunchEndTime);
+    const lunchDuration = lunchEnd - lunchStart;
+
+    if (lunchDuration <= 0) {
+        return startMinutes + remainingMinutes;
+    }
+
+    // If starting during lunch, work begins after lunch
+    if (startMinutes >= lunchStart && startMinutes < lunchEnd) {
+        return lunchEnd + remainingMinutes;
+    }
+
+    const naiveEnd = startMinutes + remainingMinutes;
+
+    // If work spans past lunch start, add lunch duration
+    if (startMinutes < lunchStart && naiveEnd > lunchStart) {
+        return naiveEnd + lunchDuration;
+    }
+
+    return naiveEnd;
 }
 
 /**

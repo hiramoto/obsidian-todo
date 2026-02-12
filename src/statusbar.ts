@@ -1,6 +1,6 @@
 import { App, TFile } from "obsidian";
 import { ActiveWork, PluginSettings } from "./types";
-import { formatDuration, getTodayDailyNote, parseLogEntries, parsePlanEntries } from "./parser";
+import { adjustForLunchBreak, formatDuration, getTodayDailyNote, minutesToTimeStr, parseLogEntries, parsePlanEntries, parseTimeToMinutes } from "./parser";
 
 /**
  * Calculate and update the status bar text showing the predicted end time.
@@ -66,22 +66,24 @@ export function calculateSchedule(content: string, settings: PluginSettings): st
         lastEndTime = sorted[0].endTime;
     }
 
-    // Calculate predicted end time
+    // Calculate predicted end time (adjusted for lunch break)
     let predictedEndTime: string;
     if (lastEndTime) {
-        const [h, m] = lastEndTime.split(":").map(Number);
-        const endMinutes = h * 60 + m + remainingMinutes;
-        const endH = Math.floor(endMinutes / 60) % 24;
-        const endM = endMinutes % 60;
-        predictedEndTime = `${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}`;
+        const startMinutes = parseTimeToMinutes(lastEndTime);
+        const endMinutes = adjustForLunchBreak(
+            startMinutes, remainingMinutes,
+            settings.lunchStartTime, settings.lunchEndTime
+        );
+        predictedEndTime = minutesToTimeStr(endMinutes);
     } else {
         // No work started yet, calculate from current time
         const now = new Date();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
-        const endMinutes = currentMinutes + remainingMinutes;
-        const endH = Math.floor(endMinutes / 60) % 24;
-        const endM = endMinutes % 60;
-        predictedEndTime = `${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}`;
+        const endMinutes = adjustForLunchBreak(
+            currentMinutes, remainingMinutes,
+            settings.lunchStartTime, settings.lunchEndTime
+        );
+        predictedEndTime = minutesToTimeStr(endMinutes);
     }
 
     return `⏰ 予定終了: ${predictedEndTime} (残り: ${formatDuration(remainingMinutes)})`;
