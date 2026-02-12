@@ -31,9 +31,12 @@ export function createHistoryPostProcessor(
         container.dataset.taskName = taskName;
 
         // Defer the actual rendering to avoid blocking
-        setTimeout(() => {
-            pendingRenders.delete(filePath);
-            renderHistoryInPlace(app, taskName, container, settings);
+        setTimeout(async () => {
+            try {
+                await renderHistoryInPlace(app, taskName, container, settings);
+            } finally {
+                pendingRenders.delete(filePath);
+            }
         }, 100);
     };
 }
