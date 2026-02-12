@@ -29,6 +29,12 @@
     font-weight: 600;
 }
 
+.kozane-history-table td:first-child,
+.kozane-history-table td:nth-child(2),
+.kozane-history-table td:nth-child(3) {
+    white-space: nowrap;
+}
+
 .kozane-history-table tr:hover {
     background-color: var(--background-secondary-alt);
 }
@@ -143,6 +149,7 @@
     align-items: center;
     gap: 8px;
     margin-bottom: 12px;
+    flex-wrap: wrap;
 }
 
 .kozane-today-btn {
@@ -168,6 +175,7 @@
 
 .kozane-date-input {
     flex: 1;
+    min-width: 130px;
     padding: 4px 8px;
     border: 1px solid var(--background-modifier-border);
     border-radius: 4px;
@@ -188,6 +196,7 @@
     display: flex;
     gap: 8px;
     margin-bottom: 12px;
+    flex-wrap: wrap;
 }
 
 .kozane-range-group {
