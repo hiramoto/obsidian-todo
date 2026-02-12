@@ -9,6 +9,7 @@ export interface PluginSettings {
     autoShowHistory: boolean;
     lunchStartTime: string;
     lunchEndTime: string;
+    defaultTaskFrontmatter: string;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -22,6 +23,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     autoShowHistory: true,
     lunchStartTime: "12:00",
     lunchEndTime: "13:00",
+    defaultTaskFrontmatter: "status: not-started\ncreated: {{date}}\nreview_date: {{date+1w}}\ndue_date:\ntags: []",
 };
 
 export interface WorkLogEntry {
