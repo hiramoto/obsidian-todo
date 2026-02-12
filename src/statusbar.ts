@@ -1,5 +1,5 @@
 import { App, TFile } from "obsidian";
-import { PluginSettings } from "./types";
+import { ActiveWork, PluginSettings } from "./types";
 import { formatDuration, getTodayDailyNote, parseLogEntries, parsePlanEntries } from "./parser";
 
 /**
@@ -85,4 +85,33 @@ export function calculateSchedule(content: string, settings: PluginSettings): st
     }
 
     return `⏰ 予定終了: ${predictedEndTime} (残り: ${formatDuration(remainingMinutes)})`;
+}
+
+/**
+ * Update the active work timer status bar element.
+ * Shows task name and elapsed time (HH:mm) with a blinking clock icon.
+ */
+export function updateTimerBar(
+    timerBarEl: HTMLElement,
+    activeWork: ActiveWork | null
+): void {
+    timerBarEl.empty();
+
+    if (!activeWork) {
+        return;
+    }
+
+    const elapsed = Date.now() - activeWork.startTime.getTime();
+    const totalMinutes = Math.floor(elapsed / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const timeStr = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+
+    timerBarEl.addClass("kozane-timer-bar");
+
+    const iconSpan = timerBarEl.createSpan({ cls: "kozane-timer-icon" });
+    iconSpan.setText("\u{1F551}");
+
+    const textSpan = timerBarEl.createSpan();
+    textSpan.setText(` ${activeWork.taskName} ${timeStr}`);
 }

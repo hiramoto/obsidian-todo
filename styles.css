@@ -210,3 +210,19 @@
     font-size: 0.8em;
     color: var(--text-muted);
 }
+
+/* --- Active Work Timer (Status Bar) --- */
+.kozane-timer-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.kozane-timer-icon {
+    animation: kozane-blink 1s ease-in-out infinite;
+}
+
+@keyframes kozane-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}

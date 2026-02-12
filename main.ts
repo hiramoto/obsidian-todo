@@ -6,7 +6,7 @@ import {
     VIEW_TYPE_DAILY_SUMMARY,
 } from "./src/types";
 import { TaskSelectModal, MemoInputModal, getTaskFilesSorted, startWork, endWork } from "./src/commands";
-import { updateStatusBar } from "./src/statusbar";
+import { updateStatusBar, updateTimerBar } from "./src/statusbar";
 import { createHistoryPostProcessor } from "./src/history-view";
 import { DailySummaryView } from "./src/sidebar-view";
 import { KozaneJournalSettingTab } from "./src/settings-tab";
@@ -14,8 +14,10 @@ import { KozaneJournalSettingTab } from "./src/settings-tab";
 export default class KozaneJournalPlugin extends Plugin {
     settings: PluginSettings = DEFAULT_SETTINGS;
     private statusBarEl: HTMLElement | null = null;
+    private timerBarEl: HTMLElement | null = null;
     private activeWork: ActiveWork | null = null;
     private statusBarInterval: number | null = null;
+    private timerInterval: number | null = null;
 
     async onload(): Promise<void> {
         await this.loadSettings();
@@ -29,6 +31,16 @@ export default class KozaneJournalPlugin extends Plugin {
             this.refreshStatusBar();
         }, 60000);
         this.registerInterval(this.statusBarInterval);
+
+        // --- Active Work Timer Bar ---
+        this.timerBarEl = this.addStatusBarItem();
+        this.refreshTimerBar();
+
+        // Update timer every 10 seconds for HH:mm accuracy
+        this.timerInterval = window.setInterval(() => {
+            this.refreshTimerBar();
+        }, 10000);
+        this.registerInterval(this.timerInterval);
 
         // --- Commands ---
         this.addCommand({
@@ -108,6 +120,7 @@ export default class KozaneJournalPlugin extends Plugin {
             const result = startWork(this.app, file, this.activeWork, this.settings);
             if (!result.warning) {
                 this.activeWork = result.activeWork;
+                this.refreshTimerBar();
             }
         }).open();
     }
@@ -123,12 +136,19 @@ export default class KozaneJournalPlugin extends Plugin {
         new MemoInputModal(this.app, async (memo) => {
             await endWork(this.app, activeWork, memo, this.settings);
             this.activeWork = null;
+            this.refreshTimerBar();
             this.refreshStatusBar();
             this.refreshSidebarView();
         }).open();
     }
 
     // --- Status Bar ---
+
+    private refreshTimerBar(): void {
+        if (this.timerBarEl) {
+            updateTimerBar(this.timerBarEl, this.activeWork);
+        }
+    }
 
     private refreshStatusBar(): void {
         if (this.statusBarEl) {
