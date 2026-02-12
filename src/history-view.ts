@@ -9,6 +9,9 @@ export function createHistoryPostProcessor(
     app: App,
     settings: PluginSettings
 ): (el: HTMLElement, ctx: MarkdownPostProcessorContext) => void {
+    // Track pending renders to avoid duplicates when files have links to other pages
+    const pendingRenders = new Set<string>();
+
     return (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
         if (!settings.autoShowHistory) return;
 
@@ -18,20 +21,22 @@ export function createHistoryPostProcessor(
         const file = app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
 
-        // Check for task_id in frontmatter
-        const cache = app.metadataCache.getFileCache(file);
-        if (!cache?.frontmatter?.task_id) return;
-
         const taskName = file.basename;
 
-        // We need to detect if this is the last section being processed
-        // Use a container div that we can check for later
+        // Only create one placeholder per file render cycle
+        if (pendingRenders.has(filePath)) return;
+        pendingRenders.add(filePath);
+
         const container = el.createDiv({ cls: "kozane-history-placeholder" });
         container.dataset.taskName = taskName;
 
         // Defer the actual rendering to avoid blocking
-        setTimeout(() => {
-            renderHistoryInPlace(app, taskName, container, settings);
+        setTimeout(async () => {
+            try {
+                await renderHistoryInPlace(app, taskName, container, settings);
+            } finally {
+                pendingRenders.delete(filePath);
+            }
         }, 100);
     };
 }
@@ -47,20 +52,6 @@ async function renderHistoryInPlace(
 ): Promise<void> {
     // Check if we already rendered (avoid duplicates)
     if (container.dataset.rendered === "true") return;
-
-    // Only render in the last placeholder found in the document
-    const parent = container.closest(".markdown-reading-view, .markdown-preview-view");
-    if (parent) {
-        const allPlaceholders = parent.querySelectorAll(
-            `.kozane-history-placeholder[data-task-name="${taskName}"]`
-        );
-        const lastPlaceholder = allPlaceholders[allPlaceholders.length - 1];
-        if (container !== lastPlaceholder) {
-            container.remove();
-            return;
-        }
-    }
-
     container.dataset.rendered = "true";
 
     const entries = await getTaskWorkLogs(app, taskName, settings);
