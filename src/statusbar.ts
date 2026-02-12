@@ -44,11 +44,14 @@ export function calculateSchedule(content: string, settings: PluginSettings): st
         return "📝 予定未設定";
     }
 
-    // Total logged time in minutes
-    const totalLoggedMinutes = logEntries.reduce((sum, e) => sum + e.durationMinutes, 0);
+    // Total logged time in minutes (only for tasks that appear in PLAN)
+    const plannedTaskNames = new Set(planEntries.map((e) => e.taskName));
+    const matchedLoggedMinutes = logEntries
+        .filter((e) => plannedTaskNames.has(e.taskName))
+        .reduce((sum, e) => sum + e.durationMinutes, 0);
 
-    // Remaining time
-    const remainingMinutes = totalPlannedMinutes - totalLoggedMinutes;
+    // Remaining time = planned total - actual time of matched tasks
+    const remainingMinutes = totalPlannedMinutes - matchedLoggedMinutes;
 
     if (remainingMinutes <= 0) {
         const overMinutes = Math.abs(remainingMinutes);

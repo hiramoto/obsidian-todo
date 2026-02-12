@@ -96,7 +96,11 @@ export class DailySummaryView extends ItemView {
 
         const totalPlannedMinutes = planEntries.reduce((sum, e) => sum + e.plannedMinutes, 0);
         const totalLoggedMinutes = logEntries.reduce((sum, e) => sum + e.durationMinutes, 0);
-        const remainingMinutes = Math.max(0, totalPlannedMinutes - totalLoggedMinutes);
+        const plannedTaskNames = new Set(planEntries.map((e) => e.taskName));
+        const matchedLoggedMinutes = logEntries
+            .filter((e) => plannedTaskNames.has(e.taskName))
+            .reduce((sum, e) => sum + e.durationMinutes, 0);
+        const remainingMinutes = Math.max(0, totalPlannedMinutes - matchedLoggedMinutes);
 
         // Progress section
         const progressSection = container.createDiv({ cls: "kozane-progress" });

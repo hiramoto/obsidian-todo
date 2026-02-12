@@ -91,7 +91,7 @@ export function parsePlanEntries(content: string, settings: PluginSettings): Pla
 
 /**
  * Parse a single PLAN line into a PlanEntry.
- * Format: - [[タスク名]] / サブタスク XXmin
+ * Format: - [[タスク名]] / サブタスク XXmin or XXh
  */
 export function parsePlanLine(line: string): PlanEntry | null {
     const taskMatch = line.match(/\[\[([^\]]+)\]\]/);
@@ -99,10 +99,16 @@ export function parsePlanLine(line: string): PlanEntry | null {
         return null;
     }
 
-    const timeMatch = line.match(/(\d+)min/);
-    const plannedMinutes = timeMatch ? parseInt(timeMatch[1]) : 0;
+    let plannedMinutes = 0;
+    const hourMatch = line.match(/(\d+(?:\.\d+)?)h\b/);
+    const minMatch = line.match(/(\d+)min/);
+    if (hourMatch) {
+        plannedMinutes = Math.round(parseFloat(hourMatch[1]) * 60);
+    } else if (minMatch) {
+        plannedMinutes = parseInt(minMatch[1]);
+    }
 
-    const noteMatch = line.match(/\]\]\s*\/\s*(.+?)(?:\s+\d+min)?$/);
+    const noteMatch = line.match(/\]\]\s*\/\s*(.+?)(?:\s+\d+(?:\.\d+)?h|\s+\d+min)?$/);
     const subTask = noteMatch ? noteMatch[1].trim() : "";
 
     return {
