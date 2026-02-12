@@ -191,7 +191,14 @@ export async function getWorkLogsForDateRange(
  */
 export function getTodayDailyNote(app: App, settings: PluginSettings): TFile | null {
     const today = window.moment().format(settings.dailyNoteFormat);
-    const path = `${settings.dailyFolder}/${today}.md`;
+    return getDailyNoteByDate(app, today, settings);
+}
+
+/**
+ * Get a daily note file by date string, or null if it doesn't exist.
+ */
+export function getDailyNoteByDate(app: App, dateStr: string, settings: PluginSettings): TFile | null {
+    const path = `${settings.dailyFolder}/${dateStr}.md`;
     const file = app.vault.getAbstractFileByPath(path);
     return file instanceof TFile ? file : null;
 }

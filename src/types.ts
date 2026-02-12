@@ -48,6 +48,6 @@ export interface TaskSummary {
     workDays: Set<string>;
 }
 
-export type SummaryPeriod = "today" | "this-week" | "last-week" | "this-month" | "last-month";
+export type SummaryTab = "date" | "period";
 
 export const VIEW_TYPE_DAILY_SUMMARY = "kozane-journal-daily-summary";

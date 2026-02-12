@@ -136,3 +136,57 @@
 .kozane-period-summary {
     margin-top: 8px;
 }
+
+/* --- Date Picker --- */
+.kozane-date-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.kozane-date-picker label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+.kozane-date-input {
+    padding: 4px 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.9em;
+}
+
+.kozane-date-input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+}
+
+/* --- Preset Buttons --- */
+.kozane-preset-buttons {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.kozane-preset-btn {
+    padding: 3px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.kozane-preset-btn:hover {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
