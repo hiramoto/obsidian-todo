@@ -141,6 +141,29 @@ export class KozaneJournalSettingTab extends PluginSettingTab {
                     })
             );
 
+        // --- Task settings ---
+        containerEl.createEl("h3", { text: "タスク設定" });
+
+        const fmSetting = new Setting(containerEl)
+            .setName("デフォルトフロントマター")
+            .setDesc(
+                "タスク追加時に自動挿入されるフロントマター（YAML形式）。" +
+                "日付式: {{date}}=今日, {{date+1d}}=1日後, {{date+1w}}=1週間後, " +
+                "{{date+2m}}=2ヶ月後, {{date+1y}}=1年後, {{title}}=タスク名"
+            );
+        fmSetting.addTextArea((text) => {
+            text
+                .setPlaceholder("status: not-started\ncreated: {{date}}")
+                .setValue(this.plugin.settings.defaultTaskFrontmatter)
+                .onChange(async (value) => {
+                    this.plugin.settings.defaultTaskFrontmatter = value;
+                    await this.plugin.saveSettings();
+                });
+            text.inputEl.rows = 6;
+            text.inputEl.style.width = "100%";
+            text.inputEl.style.fontFamily = "monospace";
+        });
+
         // --- Display settings ---
         containerEl.createEl("h3", { text: "表示設定" });
 

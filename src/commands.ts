@@ -118,6 +118,170 @@ export async function getTaskFilesSorted(app: App, settings: PluginSettings): Pr
 }
 
 /**
+ * Resolve date expressions in a string.
+ * Supported formats:
+ *   {{date}}       → today (YYYY-MM-DD)
+ *   {{date+1d}}    → 1 day from today
+ *   {{date+2w}}    → 2 weeks from today
+ *   {{date+3m}}    → 3 months from today
+ *   {{date+1y}}    → 1 year from today
+ *   {{title}}      → replaced with the given title
+ */
+export function resolveDateExpressions(template: string, title: string): string {
+    return template.replace(/\{\{([^}]+)\}\}/g, (_match, expr: string) => {
+        const trimmed = expr.trim();
+
+        if (trimmed === "title") {
+            return title;
+        }
+
+        if (trimmed === "date") {
+            return window.moment().format("YYYY-MM-DD");
+        }
+
+        const relativeMatch = trimmed.match(/^date\+(\d+)([dwmy])$/);
+        if (relativeMatch) {
+            const amount = parseInt(relativeMatch[1]);
+            const unit = relativeMatch[2] as "d" | "w" | "m" | "y";
+            const unitMap: Record<string, moment.unitOfTime.DurationConstructor> = {
+                d: "days",
+                w: "weeks",
+                m: "months",
+                y: "years",
+            };
+            return window.moment().add(amount, unitMap[unit]).format("YYYY-MM-DD");
+        }
+
+        // Unknown expression, return as-is
+        return `{{${expr}}}`;
+    });
+}
+
+/**
+ * Modal for adding a new task.
+ */
+export class TaskAddModal extends Modal {
+    private onSubmit: (title: string, extraFrontmatter: string) => void;
+    private title: string = "";
+    private extraFrontmatter: string = "";
+    private settings: PluginSettings;
+
+    constructor(app: App, settings: PluginSettings, onSubmit: (title: string, extraFrontmatter: string) => void) {
+        super(app);
+        this.settings = settings;
+        this.onSubmit = onSubmit;
+    }
+
+    onOpen(): void {
+        const { contentEl } = this;
+        contentEl.createEl("h3", { text: "タスク追加" });
+
+        new Setting(contentEl)
+            .setName("タスク名")
+            .setDesc("ファイル名にも使用されます（YYYYMMDD-タスク名.md）")
+            .addText((text) => {
+                text.setPlaceholder("タスク名を入力...");
+                text.onChange((value) => {
+                    this.title = value;
+                });
+                text.inputEl.addEventListener("keydown", (e: KeyboardEvent) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        this.submit();
+                    }
+                });
+                setTimeout(() => text.inputEl.focus(), 50);
+            });
+
+        const previewText = resolveDateExpressions(this.settings.defaultTaskFrontmatter, "(タスク名)");
+        const previewEl = contentEl.createEl("details");
+        previewEl.createEl("summary", { text: "デフォルトフロントマター（プレビュー）" });
+        const preEl = previewEl.createEl("pre");
+        preEl.createEl("code", { text: `---\n${previewText}\n---` });
+        preEl.style.fontSize = "0.85em";
+        preEl.style.padding = "8px";
+        preEl.style.background = "var(--background-secondary)";
+        preEl.style.borderRadius = "4px";
+
+        new Setting(contentEl)
+            .setName("追加フロントマター（省略可）")
+            .setDesc("YAML形式で追加のフロントマターを入力")
+            .addTextArea((text) => {
+                text.setPlaceholder("priority: high\ncategory: feature");
+                text.onChange((value) => {
+                    this.extraFrontmatter = value;
+                });
+                text.inputEl.rows = 3;
+                text.inputEl.style.width = "100%";
+            });
+
+        new Setting(contentEl)
+            .addButton((btn) =>
+                btn
+                    .setButtonText("作成する")
+                    .setCta()
+                    .onClick(() => this.submit())
+            )
+            .addButton((btn) =>
+                btn.setButtonText("キャンセル").onClick(() => this.close())
+            );
+    }
+
+    private submit(): void {
+        if (!this.title.trim()) {
+            new Notice("⚠️ タスク名を入力してください");
+            return;
+        }
+        this.close();
+        this.onSubmit(this.title.trim(), this.extraFrontmatter.trim());
+    }
+
+    onClose(): void {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
+}
+
+/**
+ * Create a new task file in the tasks folder.
+ */
+export async function createTaskFile(
+    app: App,
+    title: string,
+    extraFrontmatter: string,
+    settings: PluginSettings
+): Promise<TFile | null> {
+    const datePrefix = window.moment().format("YYYYMMDD");
+    const fileName = `${datePrefix}-${title}.md`;
+    const filePath = `${settings.tasksFolder}/${fileName}`;
+
+    // Check if file already exists
+    const existing = app.vault.getAbstractFileByPath(filePath);
+    if (existing) {
+        new Notice(`⚠️ 同名のタスクファイルが既に存在します: ${fileName}`);
+        return null;
+    }
+
+    // Ensure the tasks folder exists
+    const folderExists = app.vault.getAbstractFileByPath(settings.tasksFolder);
+    if (!folderExists) {
+        await app.vault.createFolder(settings.tasksFolder);
+    }
+
+    // Build frontmatter
+    let frontmatter = resolveDateExpressions(settings.defaultTaskFrontmatter, title);
+    if (extraFrontmatter) {
+        frontmatter += "\n" + extraFrontmatter;
+    }
+
+    const content = `---\n${frontmatter}\n---\n`;
+
+    const file = await app.vault.create(filePath, content);
+    new Notice(`✅ タスクを作成しました: ${fileName}`);
+    return file;
+}
+
+/**
  * Start work on a task.
  */
 export function startWork(

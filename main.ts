@@ -5,7 +5,7 @@ import {
     PluginSettings,
     VIEW_TYPE_DAILY_SUMMARY,
 } from "./src/types";
-import { TaskSelectModal, MemoInputModal, getTaskFilesSorted, startWork, endWork } from "./src/commands";
+import { TaskSelectModal, MemoInputModal, TaskAddModal, getTaskFilesSorted, startWork, endWork, createTaskFile } from "./src/commands";
 import { updateStatusBar, updateTimerBar } from "./src/statusbar";
 import { createHistoryPostProcessor } from "./src/history-view";
 import { DailySummaryView } from "./src/sidebar-view";
@@ -53,6 +53,12 @@ export default class KozaneJournalPlugin extends Plugin {
             id: "end-work",
             name: "作業終了",
             callback: () => this.handleEndWork(),
+        });
+
+        this.addCommand({
+            id: "add-task",
+            name: "タスク追加",
+            callback: () => this.handleAddTask(),
         });
 
         // --- Markdown Post Processor (Task History) ---
@@ -121,6 +127,19 @@ export default class KozaneJournalPlugin extends Plugin {
             if (!result.warning) {
                 this.activeWork = result.activeWork;
                 this.refreshTimerBar();
+            }
+        }).open();
+    }
+
+    private async handleAddTask(): Promise<void> {
+        new TaskAddModal(this.app, this.settings, async (title, extraFrontmatter) => {
+            const file = await createTaskFile(this.app, title, extraFrontmatter, this.settings);
+            if (file) {
+                // Open the newly created task file
+                const leaf = this.app.workspace.getLeaf(false);
+                if (leaf) {
+                    await leaf.openFile(file);
+                }
             }
         }).open();
     }
