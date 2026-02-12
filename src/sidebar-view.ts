@@ -2,7 +2,7 @@ import { App, ItemView, WorkspaceLeaf } from "obsidian";
 import {
     PluginSettings,
     TaskSummary,
-    SummaryPeriod,
+    SummaryTab,
     VIEW_TYPE_DAILY_SUMMARY,
     WorkLogEntry,
 } from "./types";
@@ -16,11 +16,20 @@ import {
 
 export class DailySummaryView extends ItemView {
     private settings: PluginSettings;
-    private currentPeriod: SummaryPeriod = "today";
+    private currentTab: SummaryTab = "date-select";
+    private selectedDate: string;
+    private periodStartDate: string;
+    private periodEndDate: string;
 
     constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
         super(leaf);
         this.settings = settings;
+
+        const m = window.moment();
+        const fmt = this.settings.dailyNoteFormat;
+        this.selectedDate = m.format(fmt);
+        this.periodStartDate = m.clone().startOf("month").format(fmt);
+        this.periodEndDate = m.clone().endOf("month").format(fmt);
     }
 
     getViewType(): string {
@@ -47,34 +56,135 @@ export class DailySummaryView extends ItemView {
         const container = this.containerEl.children[1];
         container.empty();
 
-        // Tab bar
+        const fmt = this.settings.dailyNoteFormat;
+
+        // Main tab bar: 日付選択 | 期間選択
         const tabBar = container.createDiv({ cls: "kozane-tab-bar" });
-        const tabs: { id: SummaryPeriod; label: string }[] = [
-            { id: "today", label: "今日" },
-            { id: "this-week", label: "今週" },
-            { id: "last-week", label: "先週" },
-            { id: "this-month", label: "今月" },
-            { id: "last-month", label: "先月" },
+        const tabs: { id: SummaryTab; label: string }[] = [
+            { id: "date-select", label: "日付選択" },
+            { id: "period-select", label: "期間選択" },
         ];
 
         for (const tab of tabs) {
             const btn = tabBar.createEl("button", {
                 text: tab.label,
-                cls: `kozane-tab ${this.currentPeriod === tab.id ? "is-active" : ""}`,
+                cls: `kozane-tab ${this.currentTab === tab.id ? "is-active" : ""}`,
             });
             btn.addEventListener("click", () => {
-                this.currentPeriod = tab.id;
+                this.currentTab = tab.id;
                 this.refresh();
             });
         }
 
         const content = container.createDiv({ cls: "kozane-sidebar-content" });
 
-        if (this.currentPeriod === "today") {
-            await this.renderTodaySummary(content);
+        if (this.currentTab === "date-select") {
+            await this.renderDateSelectTab(content);
         } else {
-            await this.renderPeriodSummary(content, this.currentPeriod);
+            await this.renderPeriodSelectTab(content);
         }
+    }
+
+    private async renderDateSelectTab(container: HTMLElement): Promise<void> {
+        const fmt = this.settings.dailyNoteFormat;
+        const today = window.moment().format(fmt);
+
+        // Controls section
+        const controls = container.createDiv({ cls: "kozane-date-controls" });
+
+        // "今日" quick button
+        const todayBtn = controls.createEl("button", {
+            text: "今日",
+            cls: `kozane-today-btn ${this.selectedDate === today ? "is-active" : ""}`,
+        });
+        todayBtn.addEventListener("click", () => {
+            this.selectedDate = today;
+            this.refresh();
+        });
+
+        // Date input
+        const dateInput = controls.createEl("input", {
+            type: "date",
+            cls: "kozane-date-input",
+        });
+        dateInput.value = window.moment(this.selectedDate, fmt).format("YYYY-MM-DD");
+        dateInput.addEventListener("change", () => {
+            if (dateInput.value) {
+                this.selectedDate = window.moment(dateInput.value, "YYYY-MM-DD").format(fmt);
+                this.refresh();
+            }
+        });
+
+        // Render the summary for the selected date
+        const isToday = this.selectedDate === today;
+        if (isToday) {
+            await this.renderTodaySummary(container);
+        } else {
+            await this.renderSingleDateSummary(container, this.selectedDate);
+        }
+    }
+
+    private async renderPeriodSelectTab(container: HTMLElement): Promise<void> {
+        const fmt = this.settings.dailyNoteFormat;
+        const m = window.moment();
+
+        // Quick period buttons
+        const quickButtons = container.createDiv({ cls: "kozane-quick-periods" });
+        const periods = [
+            { label: "今週", start: m.clone().startOf("isoWeek").format(fmt), end: m.clone().endOf("isoWeek").format(fmt) },
+            { label: "先週", start: m.clone().subtract(1, "week").startOf("isoWeek").format(fmt), end: m.clone().subtract(1, "week").endOf("isoWeek").format(fmt) },
+            { label: "今月", start: m.clone().startOf("month").format(fmt), end: m.clone().endOf("month").format(fmt) },
+            { label: "先月", start: m.clone().subtract(1, "month").startOf("month").format(fmt), end: m.clone().subtract(1, "month").endOf("month").format(fmt) },
+        ];
+
+        for (const period of periods) {
+            const isActive = this.periodStartDate === period.start && this.periodEndDate === period.end;
+            const btn = quickButtons.createEl("button", {
+                text: period.label,
+                cls: `kozane-tab ${isActive ? "is-active" : ""}`,
+            });
+            btn.addEventListener("click", () => {
+                this.periodStartDate = period.start;
+                this.periodEndDate = period.end;
+                this.refresh();
+            });
+        }
+
+        // Date range inputs
+        const rangeControls = container.createDiv({ cls: "kozane-range-controls" });
+
+        const startGroup = rangeControls.createDiv({ cls: "kozane-range-group" });
+        startGroup.createEl("label", { text: "開始日", cls: "kozane-range-label" });
+        const startInput = startGroup.createEl("input", {
+            type: "date",
+            cls: "kozane-date-input",
+        });
+        startInput.value = window.moment(this.periodStartDate, fmt).format("YYYY-MM-DD");
+
+        const endGroup = rangeControls.createDiv({ cls: "kozane-range-group" });
+        endGroup.createEl("label", { text: "終了日", cls: "kozane-range-label" });
+        const endInput = endGroup.createEl("input", {
+            type: "date",
+            cls: "kozane-date-input",
+        });
+        endInput.value = window.moment(this.periodEndDate, fmt).format("YYYY-MM-DD");
+
+        startInput.addEventListener("change", () => {
+            if (startInput.value) {
+                this.periodStartDate = window.moment(startInput.value, "YYYY-MM-DD").format(fmt);
+                this.refresh();
+            }
+        });
+
+        endInput.addEventListener("change", () => {
+            if (endInput.value) {
+                this.periodEndDate = window.moment(endInput.value, "YYYY-MM-DD").format(fmt);
+                this.refresh();
+            }
+        });
+
+        // Render the period summary
+        await this.renderPeriodSummary(container, this.periodStartDate, this.periodEndDate);
     }
 
     private async renderTodaySummary(container: HTMLElement): Promise<void> {
@@ -139,15 +249,41 @@ export class DailySummaryView extends ItemView {
         this.renderTaskSummary(container, logEntries, "タスク別集計");
     }
 
+    private async renderSingleDateSummary(container: HTMLElement, date: string): Promise<void> {
+        const entries = await getWorkLogsForDateRange(
+            this.app,
+            date,
+            date,
+            this.settings
+        );
+
+        const displayDate = window.moment(date, this.settings.dailyNoteFormat).format("YYYY/MM/DD");
+        container.createEl("h3", { text: `【${displayDate}の作業時間】` });
+
+        if (entries.length === 0) {
+            container.createEl("p", {
+                text: "作業記録がありません",
+                cls: "kozane-no-data",
+            });
+            return;
+        }
+
+        const totalMinutes = entries.reduce((sum, e) => sum + e.durationMinutes, 0);
+
+        this.renderTaskSummary(container, entries, "タスク別集計");
+    }
+
     private async renderPeriodSummary(
         container: HTMLElement,
-        period: SummaryPeriod
+        startDate: string,
+        endDate: string
     ): Promise<void> {
-        const { startDate, endDate, label } = this.getDateRange(period);
+        const fmt = this.settings.dailyNoteFormat;
+        const displayStart = window.moment(startDate, fmt).format("YYYY/MM/DD");
+        const displayEnd = window.moment(endDate, fmt).format("YYYY/MM/DD");
 
-        const header = container.createEl("h3", { text: `【${label}の作業時間】` });
         container.createEl("p", {
-            text: `${startDate} 〜 ${endDate}`,
+            text: `${displayStart} 〜 ${displayEnd}`,
             cls: "kozane-date-range",
         });
 
@@ -254,47 +390,5 @@ export class DailySummaryView extends ItemView {
         const row = container.createDiv({ cls: "kozane-info-row" });
         row.createEl("span", { text: label, cls: "kozane-info-label" });
         row.createEl("span", { text: value, cls: "kozane-info-value" });
-    }
-
-    private getDateRange(period: SummaryPeriod): {
-        startDate: string;
-        endDate: string;
-        label: string;
-    } {
-        const m = window.moment();
-        const fmt = this.settings.dailyNoteFormat;
-
-        switch (period) {
-            case "this-week":
-                return {
-                    startDate: m.clone().startOf("isoWeek").format(fmt),
-                    endDate: m.clone().endOf("isoWeek").format(fmt),
-                    label: "今週",
-                };
-            case "last-week":
-                return {
-                    startDate: m.clone().subtract(1, "week").startOf("isoWeek").format(fmt),
-                    endDate: m.clone().subtract(1, "week").endOf("isoWeek").format(fmt),
-                    label: "先週",
-                };
-            case "this-month":
-                return {
-                    startDate: m.clone().startOf("month").format(fmt),
-                    endDate: m.clone().endOf("month").format(fmt),
-                    label: "今月",
-                };
-            case "last-month":
-                return {
-                    startDate: m.clone().subtract(1, "month").startOf("month").format(fmt),
-                    endDate: m.clone().subtract(1, "month").endOf("month").format(fmt),
-                    label: "先月",
-                };
-            default:
-                return {
-                    startDate: m.format(fmt),
-                    endDate: m.format(fmt),
-                    label: "今日",
-                };
-        }
     }
 }
