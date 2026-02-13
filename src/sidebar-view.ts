@@ -5,6 +5,7 @@ import {
     SummaryTab,
     VIEW_TYPE_DAILY_SUMMARY,
     WorkLogEntry,
+    TimeSlot,
 } from "./types";
 import {
     adjustForLunchBreak,
@@ -13,6 +14,7 @@ import {
     minutesToTimeStr,
     parseLogEntries,
     parsePlanEntries,
+    parsePlanTimeSlots,
     parseTimeToMinutes,
     getWorkLogsForDateRange,
 } from "./parser";
@@ -206,6 +208,7 @@ export class DailySummaryView extends ItemView {
 
         const planEntries = parsePlanEntries(fileContent, this.settings);
         const logEntries = parseLogEntries(fileContent, today, this.settings);
+        const timeSlots = parsePlanTimeSlots(fileContent, this.settings);
 
         const totalPlannedMinutes = planEntries.reduce((sum, e) => sum + e.plannedMinutes, 0);
         const totalLoggedMinutes = logEntries.reduce((sum, e) => sum + e.durationMinutes, 0);
@@ -214,6 +217,9 @@ export class DailySummaryView extends ItemView {
             .filter((e) => plannedTaskNames.has(e.taskName))
             .reduce((sum, e) => sum + e.durationMinutes, 0);
         const remainingMinutes = Math.max(0, totalPlannedMinutes - matchedLoggedMinutes);
+
+        // Upcoming tasks section
+        this.renderUpcomingTasks(container, timeSlots);
 
         // Progress section
         const progressSection = container.createDiv({ cls: "kozane-progress" });
@@ -250,8 +256,8 @@ export class DailySummaryView extends ItemView {
             this.addInfoRow(progressInfo, "⏰ 予定終了", predictedEnd);
         }
 
-        // Task summary
-        this.renderTaskSummary(container, logEntries, "タスク別集計");
+        // Task planned vs actual summary
+        this.renderTaskPlannedVsActual(container, planEntries, logEntries);
     }
 
     private async renderSingleDateSummary(container: HTMLElement, date: string): Promise<void> {
@@ -336,7 +342,7 @@ export class DailySummaryView extends ItemView {
             const taskDiv = section.createDiv({ cls: "kozane-task-item" });
             taskDiv.createEl("div", { text: taskName, cls: "kozane-task-name" });
             taskDiv.createEl("div", {
-                text: `  ${summary.sessionCount}回 / ${formatDuration(summary.totalMinutes)}`,
+                text: `  ${formatDuration(summary.totalMinutes)}`,
                 cls: "kozane-task-detail",
             });
         }
@@ -389,6 +395,137 @@ export class DailySummaryView extends ItemView {
         return new Map(
             [...map.entries()].sort((a, b) => b[1].totalMinutes - a[1].totalMinutes)
         );
+    }
+
+    private renderTaskPlannedVsActual(
+        container: HTMLElement,
+        planEntries: { taskName: string; plannedMinutes: number }[],
+        logEntries: WorkLogEntry[]
+    ): void {
+        // Aggregate planned minutes by task name
+        const plannedByTask = new Map<string, number>();
+        for (const entry of planEntries) {
+            plannedByTask.set(
+                entry.taskName,
+                (plannedByTask.get(entry.taskName) || 0) + entry.plannedMinutes
+            );
+        }
+
+        // Aggregate actual minutes by task name
+        const actualByTask = new Map<string, number>();
+        for (const entry of logEntries) {
+            actualByTask.set(
+                entry.taskName,
+                (actualByTask.get(entry.taskName) || 0) + entry.durationMinutes
+            );
+        }
+
+        // Collect all task names (planned + unplanned)
+        const allTasks = new Set([...plannedByTask.keys(), ...actualByTask.keys()]);
+
+        const section = container.createDiv({ cls: "kozane-task-summary" });
+        section.createEl("h4", { text: "タスク別 予定 vs 実績" });
+        section.createEl("hr");
+
+        // Planned tasks first
+        for (const taskName of plannedByTask.keys()) {
+            const planned = plannedByTask.get(taskName) || 0;
+            const actual = actualByTask.get(taskName) || 0;
+            const diff = planned - actual;
+
+            const taskDiv = section.createDiv({ cls: "kozane-task-item" });
+            taskDiv.createEl("div", { text: taskName, cls: "kozane-task-name" });
+
+            let detail: string;
+            if (actual === 0) {
+                detail = `  予定 ${formatDuration(planned)} → 未着手`;
+            } else if (diff > 0) {
+                detail = `  予定 ${formatDuration(planned)} → 実績 ${formatDuration(actual)}（残り ${formatDuration(diff)}）`;
+            } else if (diff < 0) {
+                detail = `  予定 ${formatDuration(planned)} → 実績 ${formatDuration(actual)}（${formatDuration(Math.abs(diff))}超過）`;
+            } else {
+                detail = `  予定 ${formatDuration(planned)} → 実績 ${formatDuration(actual)}（完了）`;
+            }
+
+            taskDiv.createEl("div", { text: detail, cls: "kozane-task-detail" });
+        }
+
+        // Unplanned tasks (in LOG but not in PLAN)
+        const unplannedTasks = [...actualByTask.keys()].filter(
+            (t) => !plannedByTask.has(t)
+        );
+        if (unplannedTasks.length > 0) {
+            section.createEl("div", {
+                text: "計画外",
+                cls: "kozane-unplanned-label",
+            });
+            for (const taskName of unplannedTasks) {
+                const actual = actualByTask.get(taskName) || 0;
+                const taskDiv = section.createDiv({ cls: "kozane-task-item" });
+                taskDiv.createEl("div", { text: taskName, cls: "kozane-task-name" });
+                taskDiv.createEl("div", {
+                    text: `  実績 ${formatDuration(actual)}`,
+                    cls: "kozane-task-detail",
+                });
+            }
+        }
+    }
+
+    private renderUpcomingTasks(container: HTMLElement, timeSlots: TimeSlot[]): void {
+        const section = container.createDiv({ cls: "kozane-upcoming" });
+        section.createEl("h3", { text: "【着手予定】" });
+
+        if (timeSlots.length === 0) {
+            section.createEl("p", {
+                text: "タイムスロットが見つかりません",
+                cls: "kozane-no-data",
+            });
+            return;
+        }
+
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        const relevantSlots = timeSlots.filter((slot) => {
+            const slotStart = parseTimeToMinutes(slot.startTime);
+            const slotEnd = parseTimeToMinutes(slot.endTime);
+            // Current slot: now is within the slot
+            const isCurrent = currentMinutes >= slotStart && currentMinutes < slotEnd;
+            // Upcoming: slot starts within 30 minutes
+            const isUpcoming = slotStart > currentMinutes && slotStart <= currentMinutes + 30;
+            return isCurrent || isUpcoming;
+        });
+
+        if (relevantSlots.length === 0) {
+            section.createEl("p", {
+                text: "直近の着手予定タスクはありません",
+                cls: "kozane-no-data",
+            });
+            return;
+        }
+
+        for (const slot of relevantSlots) {
+            const slotStart = parseTimeToMinutes(slot.startTime);
+            const isCurrent = currentMinutes >= slotStart && currentMinutes < parseTimeToMinutes(slot.endTime);
+            const label = isCurrent ? "現在" : "もうすぐ";
+
+            const slotDiv = section.createDiv({ cls: "kozane-upcoming-slot" });
+            slotDiv.createEl("div", {
+                text: `${slot.name} ${slot.startTime}-${slot.endTime}`,
+                cls: "kozane-upcoming-slot-header",
+            });
+            slotDiv.createEl("span", {
+                text: label,
+                cls: `kozane-upcoming-badge ${isCurrent ? "is-current" : "is-soon"}`,
+            });
+
+            for (const entry of slot.entries) {
+                slotDiv.createEl("div", {
+                    text: `・${entry.taskName}${entry.subTask ? " / " + entry.subTask : ""} ${formatDuration(entry.plannedMinutes)}`,
+                    cls: "kozane-upcoming-task",
+                });
+            }
+        }
     }
 
     private addInfoRow(container: HTMLElement, label: string, value: string): void {

@@ -211,6 +211,59 @@
     color: var(--text-muted);
 }
 
+/* --- Upcoming Tasks --- */
+.kozane-upcoming {
+    margin-bottom: 12px;
+}
+
+.kozane-upcoming-slot {
+    margin: 6px 0;
+    padding: 6px 8px;
+    border-left: 3px solid var(--interactive-accent);
+    background: var(--background-secondary);
+    border-radius: 0 4px 4px 0;
+}
+
+.kozane-upcoming-slot-header {
+    font-weight: 600;
+    font-size: 0.85em;
+    display: inline;
+    margin-right: 6px;
+}
+
+.kozane-upcoming-badge {
+    font-size: 0.75em;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.kozane-upcoming-badge.is-current {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.kozane-upcoming-badge.is-soon {
+    background: var(--background-modifier-border);
+    color: var(--text-muted);
+}
+
+.kozane-upcoming-task {
+    font-size: 0.85em;
+    padding: 2px 0 2px 4px;
+    color: var(--text-normal);
+}
+
+/* --- Unplanned Tasks Label --- */
+.kozane-unplanned-label {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 8px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--background-modifier-border);
+}
+
 /* --- Active Work Timer (Status Bar) --- */
 .kozane-timer-bar {
     display: inline-flex;
