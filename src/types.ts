@@ -54,6 +54,13 @@ export interface TaskSummary {
     workDays: Set<string>;
 }
 
+export interface TimeSlot {
+    name: string;
+    startTime: string;
+    endTime: string;
+    entries: PlanEntry[];
+}
+
 export type SummaryPeriod = "today" | "this-week" | "last-week" | "this-month" | "last-month";
 
 export type SummaryTab = "date-select" | "period-select";

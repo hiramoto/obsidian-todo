@@ -1,5 +1,5 @@
 import { App, TFile } from "obsidian";
-import { PluginSettings, WorkLogEntry, PlanEntry } from "./types";
+import { PluginSettings, WorkLogEntry, PlanEntry, TimeSlot } from "./types";
 
 /**
  * Parse LOG section entries from a daily note's content.
@@ -87,6 +87,51 @@ export function parsePlanEntries(content: string, settings: PluginSettings): Pla
     }
 
     return entries;
+}
+
+/**
+ * Parse PLAN section with time slot headers.
+ * Format: ### スロット名 HH:MM-HH:MM
+ * Returns time slots with their entries. Returns empty array if no slots found.
+ */
+export function parsePlanTimeSlots(content: string, settings: PluginSettings): TimeSlot[] {
+    const lines = content.split("\n");
+    const sectionHeader = `## ${settings.planSectionName}`;
+    let inPlanSection = false;
+    const slots: TimeSlot[] = [];
+    let currentSlot: TimeSlot | null = null;
+
+    for (const line of lines) {
+        if (line.trim() === sectionHeader) {
+            inPlanSection = true;
+            continue;
+        }
+        if (inPlanSection && line.startsWith("## ") && !line.startsWith("### ")) {
+            break;
+        }
+        if (!inPlanSection) continue;
+
+        const slotMatch = line.match(/^###\s+(.+?)\s+(\d{2}:\d{2})-(\d{2}:\d{2})/);
+        if (slotMatch) {
+            currentSlot = {
+                name: slotMatch[1],
+                startTime: slotMatch[2],
+                endTime: slotMatch[3],
+                entries: [],
+            };
+            slots.push(currentSlot);
+            continue;
+        }
+
+        if (currentSlot && line.trim().startsWith("-")) {
+            const entry = parsePlanLine(line);
+            if (entry) {
+                currentSlot.entries.push(entry);
+            }
+        }
+    }
+
+    return slots;
 }
 
 /**
